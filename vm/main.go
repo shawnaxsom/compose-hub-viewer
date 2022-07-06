@@ -46,7 +46,7 @@ func hello(ctx echo.Context) error {
 
 func composeUp(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, HTTPMessageBody{
-		Message: `version: '3'
+		Message: `version: '2'
 services:
   hello_world:
     image: ubuntu
