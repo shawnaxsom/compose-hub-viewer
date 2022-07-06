@@ -29,24 +29,12 @@ export function App() {
     setComposeFile(JSON.stringify(result));
   };
 
-  const composeUp = async () => {
+  const downloadComposeFile = async () => {
     setComposeFile("Testing...");
     const result = (await ddClient.extension.vm?.service?.get(
       "/compose-up"
     )) as any;
     setComposeFile(JSON.stringify(result) || "Nope");
-
-    setComposeFile("Compose Up...");
-    // try {
-    //   await ddClient.extension.host.cli.exec(
-    //     `printf "${result.Message}" > docker-compose.yaml`,
-    //     []
-    //   );
-    //   await ddClient.docker.cli.exec(`compose up`, ["-d"]);
-    // } catch (e) {
-    //   setComposeFile("Oops... " + JSON.stringify(e));
-    //   return;
-    // }
 
     const responseComposeFile = decodeURIComponent(result.Message);
     setComposeFile(responseComposeFile);
@@ -65,6 +53,21 @@ export function App() {
     setRepos(reposFromComposeFile);
   };
 
+  const composeUp = async () => {
+    setComposeFile("Compose Up...");
+    try {
+      await ddClient.extension.host.cli.exec(
+        `printf '${composeFile}' > docker-compose.yaml`,
+        []
+      );
+      await ddClient.docker.cli.exec(`compose up`, ["-d"]);
+      setComposeFile("Compose Up Complete");
+    } catch (e) {
+      setComposeFile("Oops... " + JSON.stringify(e));
+      return;
+    }
+  };
+
   return (
     <>
       <Typography variant="h3">Compose-Hub-Viewer</Typography>
@@ -73,9 +76,19 @@ export function App() {
         contents, and lists links to mentioned Namespaces and Repositories.
       </Typography>
       <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
-        <Button variant="contained" onClick={composeUp}>
-          Compose up
-        </Button>
+        <Stack direction="column" alignItems="end" spacing={2}>
+          <Button variant="contained" onClick={downloadComposeFile}>
+            Download Compose File
+          </Button>
+
+          <Button
+            variant="contained"
+            disabled={!composeFile}
+            onClick={composeUp}
+          >
+            Compose Up
+          </Button>
+        </Stack>
 
         <TextField
           label="Backend response"
