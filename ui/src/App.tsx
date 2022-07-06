@@ -1,7 +1,14 @@
 import React from "react";
 import Button from "@mui/material/Button";
 import { createDockerDesktopClient } from "@docker/extension-api-client";
-import { Stack, TextField, Typography } from "@mui/material";
+import {
+  Container,
+  Divider,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 // Note: This line relies on Docker Desktop's presence as a host application.
 // If you're running this React app in a browser, it won't work properly.
@@ -42,6 +49,11 @@ export function App() {
     setResponse(decodeURIComponent(result.Message));
   };
 
+  const namespaces = `docker
+  `;
+  const repositories = `ubuntu
+  `;
+
   return (
     <>
       <Typography variant="h3">Docker extension demo</Typography>
@@ -56,10 +68,6 @@ export function App() {
         response will appear in the textarea.
       </Typography>
       <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
-        <Button variant="contained" onClick={fetchAndDisplayResponse}>
-          Call backend
-        </Button>
-
         <Button variant="contained" onClick={composeUp}>
           Compose up
         </Button>
@@ -73,6 +81,24 @@ export function App() {
           minRows={5}
           value={response ?? ""}
         />
+        <Stack
+          direction="column"
+          alignItems="start"
+          spacing={2}
+          sx={{ mt: 4 }}
+          divider={<Divider orientation="horizontal" flexItem />}
+        >
+          <Stack direction="column">
+            Namespaces
+            <Link href="https://hub.docker.com/search?q=&image_filter=official">
+              Official Images
+            </Link>
+          </Stack>
+          <Stack direction="column">
+            Repositories
+            <Link href="https://hub.docker.com/_/nginx">Nginx</Link>
+          </Stack>
+        </Stack>
       </Stack>
     </>
   );
