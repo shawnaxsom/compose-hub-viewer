@@ -53,7 +53,7 @@ func ComposesHandler(w http.ResponseWriter, r *http.Request) {
 func GetComposesByNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
-	c, _ := getComposesByNamespace(namespace)
+	c := getComposesByNamespace(namespace)
 
 	writeResponse(w, c)
 }
@@ -71,16 +71,16 @@ func GetCompose(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, c)
 }
 
-func getComposesByNamespace(namespace string) ([]Compose, error) {
+func getComposesByNamespace(namespace string) []Compose {
 	composes := make([]Compose, 0)
 	ns, ok := DB[namespace]
 	if !ok {
-		return composes, nil
+		return composes
 	}
 	for name := range ns {
 		composes = append(composes, ns[name])
 	}
-	return composes, nil
+	return composes
 }
 
 func getCompose(namespace, name string) (*Compose, error) {
