@@ -1,0 +1,19 @@
+{
+  "icon": "docker.svg",
+  "vm": {
+    "composefile": "docker-compose.yaml",
+    "exposes": {
+      "socket": "extension-compose-hub-viewer.sock"
+    }
+  },
+  "ui": {
+    "dashboard-tab": {
+      "title": "Compose-Hub-Viewer",
+      "src": "index.html",
+      "root": "ui",
+      "backend": {
+        "socket": "extension-compose-hub-viewer.sock"
+      }
+    }
+  }
+}

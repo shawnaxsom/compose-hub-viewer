@@ -1,0 +1,3 @@
+services:
+  compose-hub-viewer:
+    image: ${DESKTOP_PLUGIN_IMAGE}
