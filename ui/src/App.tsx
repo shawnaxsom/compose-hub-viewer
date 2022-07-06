@@ -37,16 +37,16 @@ export function App() {
     setComposeFile(JSON.stringify(result) || "Nope");
 
     setComposeFile("Compose Up...");
-    try {
-      await ddClient.extension.host.cli.exec(
-        `printf "${result.Message}" > docker-compose.yaml`,
-        []
-      );
-      await ddClient.docker.cli.exec(`compose up`, ["-d"]);
-    } catch (e) {
-      setComposeFile("Oops... " + JSON.stringify(e));
-      return;
-    }
+    // try {
+    //   await ddClient.extension.host.cli.exec(
+    //     `printf "${result.Message}" > docker-compose.yaml`,
+    //     []
+    //   );
+    //   await ddClient.docker.cli.exec(`compose up`, ["-d"]);
+    // } catch (e) {
+    //   setComposeFile("Oops... " + JSON.stringify(e));
+    //   return;
+    // }
 
     const responseComposeFile = decodeURIComponent(result.Message);
     setComposeFile(responseComposeFile);
@@ -58,7 +58,8 @@ export function App() {
 
     for (const serviceName in yaml.services) {
       const service = yaml.services[serviceName];
-      reposFromComposeFile.push(service.image);
+      const serviceRepo = service.image.replace(/[:][a-zA-Z0-9]+/, "");
+      reposFromComposeFile.push(serviceRepo);
     }
 
     setRepos(reposFromComposeFile);

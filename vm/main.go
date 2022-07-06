@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -45,12 +46,12 @@ func hello(ctx echo.Context) error {
 }
 
 func composeUp(ctx echo.Context) error {
+	resp, _ := http.Get("https://gist.githubusercontent.com/adamelliotfields/cd49f056deab05250876286d7657dc4b/raw/31198290728608a78b47b0496ef51e60be6b6d0b/docker-compose.yml")
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
 	return ctx.JSON(http.StatusOK, HTTPMessageBody{
-		Message: `version: '2'
-services:
-  hello_world:
-    image: ubuntu
-    command: [/bin/echo, 'Hello world']`,
+		Message: string(body),
 	})
 }
 
