@@ -72,7 +72,7 @@ func GetCompose(w http.ResponseWriter, r *http.Request) {
 }
 
 func getComposesByNamespace(namespace string) ([]Compose, error) {
-	var composes []Compose
+	composes := make([]Compose, 0)
 	ns, ok := DB[namespace]
 	if !ok {
 		return composes, nil
