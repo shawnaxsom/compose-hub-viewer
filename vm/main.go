@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -63,17 +61,11 @@ func composeFile(ctx echo.Context) error {
 }
 
 func composeFileList(ctx echo.Context) error {
-	composeFiles := []composeFileListItem{{Name: "Foo", Description: "Bar"}, {Name: "Foo2", Description: "Bar2"}}
-
-	e, err := json.Marshal(composeFiles)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	fmt.Println(string(e))
+	resp, _ := http.Get("http://localhost:8000/composes/foonamespace")
+	body, _ := ioutil.ReadAll(resp.Body)
 
 	return ctx.JSON(http.StatusOK, HTTPMessageBody{
-		Message: string(e),
+		Message: string(body),
 	})
 }
 

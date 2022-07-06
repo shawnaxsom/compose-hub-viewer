@@ -24,24 +24,25 @@ export function App() {
     {
       name: string;
       description: string;
+      compose_file: string;
     }[]
   >([]);
+  const [selectedCompose, setSelectedCompose] = React.useState<{
+    name: string;
+    description: string;
+    compose_file: string;
+  }>();
   const [composeFile, setComposeFile] = React.useState<string>();
   const [repos, setRepos] = React.useState<Array<string>>();
   const ddClient = useDockerDesktopClient();
 
   const downloadComposeFiles = async () => {
-    // setComposeFile("Testing...");
-    const result = (await ddClient.extension.vm?.service?.get(
-      "/compose-files"
-    )) as any;
-    // setComposeFile(JSON.stringify(result) || "Nope");
+    const result = await fetch("http://localhost:8000/composes/foonamespace");
+    const json = await result.json();
+    console.log("json", json);
+    setComposeFileList(json as any);
 
-    const responseComposeFile = decodeURIComponent(result.Message);
-    // setComposeFile(responseComposeFile);
-    setComposeFileList(JSON.parse(responseComposeFile));
-
-    const yaml = parse(responseComposeFile);
+    const yaml = parse(decodeURIComponent(json[0].compose_file));
     // setComposeFile(JSON.stringify(yaml.services));
 
     const reposFromComposeFile = [];
@@ -58,10 +59,9 @@ export function App() {
   const composeUp = async () => {
     setComposeFile("Compose Up...");
     try {
-      const result = (await ddClient.extension.vm?.service?.get(
-        "/compose-file"
-      )) as any;
-      const composeFile = result.Message;
+      // const result = (await ddClient.extension.vm?.service?.get(
+      //   "/compose-file"
+      // )) as any;
       setComposeFile(composeFile || "Nope");
 
       await ddClient.extension.host.cli.exec(
@@ -81,12 +81,10 @@ export function App() {
       <Button variant="contained" onClick={downloadComposeFiles}>
         Download Compose Files
       </Button>
-
-      <Button variant="contained" disabled={!composeFile} onClick={composeUp}>
-        Compose Up
-      </Button>
     </Stack>
   );
+
+  console.log(composeFileList);
 
   const composeFiles = (
     <Stack
@@ -97,25 +95,40 @@ export function App() {
       divider={<Divider orientation="horizontal" flexItem />}
     >
       {composeFileList.map(
-        (listItem: { name: string; description: string }) => (
-          <Stack direction="column">
-            <Link onClick={composeUp}>{listItem.name}</Link>
-            {listItem.description}
-          </Stack>
-        )
+        (listItem: {
+          name: string;
+          description: string;
+          compose_file: string;
+        }) => {
+          console.log("listItem", listItem);
+          console.log("selectedCompose", selectedCompose);
+          return (
+            <Stack direction="column">
+              <Link
+                onClick={() => {
+                  setSelectedCompose(listItem);
+                  setComposeFile(decodeURIComponent(listItem.compose_file));
+                }}
+              >
+                {listItem?.name}
+                {selectedCompose?.name === listItem?.name ? "*" : ""}
+              </Link>
+              {listItem?.description}
+            </Stack>
+          );
+        }
       )}
     </Stack>
   );
 
   const composeFileTextField = (
     <TextField
-      label="Compose file"
       sx={{ width: 480 }}
       disabled
       multiline
       variant="outlined"
       minRows={5}
-      value={composeFile ?? ""}
+      value={composeFile}
     />
   );
 
@@ -161,7 +174,22 @@ export function App() {
 
         <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
           {composeFileTextField}
-          {composeFileMetadata}
+
+          <Stack
+            direction="column"
+            alignItems="start"
+            spacing={2}
+            sx={{ mt: 4 }}
+          >
+            <Button
+              variant="contained"
+              disabled={!composeFile}
+              onClick={composeUp}
+            >
+              Compose Up
+            </Button>
+            {composeFileMetadata}
+          </Stack>
         </Stack>
       </Stack>
     </>
