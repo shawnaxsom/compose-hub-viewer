@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { parse, stringify } from "yaml";
 
 // Note: This line relies on Docker Desktop's presence as a host application.
 // If you're running this React app in a browser, it won't work properly.
@@ -19,22 +20,23 @@ function useDockerDesktopClient() {
 }
 
 export function App() {
-  const [response, setResponse] = React.useState<string>();
+  const [composeFile, setComposeFile] = React.useState<string>();
+  const [repos, setRepos] = React.useState<Array<string>>();
   const ddClient = useDockerDesktopClient();
 
   const fetchAndDisplayResponse = async () => {
     const result = await ddClient.extension.vm?.service?.get("/hello");
-    setResponse(JSON.stringify(result));
+    setComposeFile(JSON.stringify(result));
   };
 
   const composeUp = async () => {
-    setResponse("Testing...");
+    setComposeFile("Testing...");
     const result = (await ddClient.extension.vm?.service?.get(
       "/compose-up"
     )) as any;
-    setResponse(JSON.stringify(result) || "Nope");
+    setComposeFile(JSON.stringify(result) || "Nope");
 
-    setResponse("Compose Up...");
+    setComposeFile("Compose Up...");
     try {
       await ddClient.extension.host.cli.exec(
         `printf "${result.Message}" > docker-compose.yaml`,
@@ -42,17 +44,25 @@ export function App() {
       );
       await ddClient.docker.cli.exec(`compose up`, ["-d"]);
     } catch (e) {
-      setResponse("Oops... " + JSON.stringify(e));
+      setComposeFile("Oops... " + JSON.stringify(e));
       return;
     }
-    // setResponse("No way");
-    setResponse(decodeURIComponent(result.Message));
-  };
 
-  const namespaces = `docker
-  `;
-  const repositories = `ubuntu
-  `;
+    const responseComposeFile = decodeURIComponent(result.Message);
+    setComposeFile(responseComposeFile);
+
+    const yaml = parse(responseComposeFile);
+    // setComposeFile(JSON.stringify(yaml.services));
+
+    const reposFromComposeFile = [];
+
+    for (const serviceName in yaml.services) {
+      const service = yaml.services[serviceName];
+      reposFromComposeFile.push(service.image);
+    }
+
+    setRepos(reposFromComposeFile);
+  };
 
   return (
     <>
@@ -79,7 +89,7 @@ export function App() {
           multiline
           variant="outlined"
           minRows={5}
-          value={response ?? ""}
+          value={composeFile ?? ""}
         />
         <Stack
           direction="column"
@@ -96,7 +106,13 @@ export function App() {
           </Stack>
           <Stack direction="column">
             Repositories
-            <Link href="https://hub.docker.com/_/nginx">Nginx</Link>
+            <Stack>
+              {repos &&
+                repos.length &&
+                repos.map((repo) => (
+                  <Link href={`https://hub.docker.com/_/${repo}`}>{repo}</Link>
+                ))}
+            </Stack>
           </Stack>
         </Stack>
       </Stack>
