@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 )
 
@@ -26,8 +26,13 @@ func main() {
 	r.HandleFunc("/composes/{namespace}", GetComposesByNamespace).Methods("GET")
 	r.HandleFunc("/composes/{namespace}/{name}", GetCompose).Methods("GET")
 
-	http.ListenAndServe(":8000", handlers.CORS()(r))
-	http.ListenAndServe(":8000", r)
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(r)
+	http.ListenAndServe(":8000", handler)
 }
 
 func ComposesHandler(w http.ResponseWriter, r *http.Request) {
