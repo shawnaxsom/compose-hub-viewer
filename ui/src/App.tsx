@@ -61,7 +61,7 @@ export function App() {
         []
       );
       await ddClient.docker.cli.exec(`compose up`, ["-d"]);
-      setComposeFile("Compose Up Complete");
+      setComposeFile("✔ Compose Up complete\n\n---\n\n" + composeFile);
     } catch (e) {
       setComposeFile("Oops... " + JSON.stringify(e));
       return;
