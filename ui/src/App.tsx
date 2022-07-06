@@ -20,24 +20,26 @@ function useDockerDesktopClient() {
 }
 
 export function App() {
+  const [composeFileList, setComposeFileList] = React.useState<
+    {
+      name: string;
+      description: string;
+    }[]
+  >([]);
   const [composeFile, setComposeFile] = React.useState<string>();
   const [repos, setRepos] = React.useState<Array<string>>();
   const ddClient = useDockerDesktopClient();
 
-  const fetchAndDisplayResponse = async () => {
-    const result = await ddClient.extension.vm?.service?.get("/hello");
-    setComposeFile(JSON.stringify(result));
-  };
-
-  const downloadComposeFile = async () => {
-    setComposeFile("Testing...");
+  const downloadComposeFiles = async () => {
+    // setComposeFile("Testing...");
     const result = (await ddClient.extension.vm?.service?.get(
-      "/compose-up"
+      "/compose-files"
     )) as any;
-    setComposeFile(JSON.stringify(result) || "Nope");
+    // setComposeFile(JSON.stringify(result) || "Nope");
 
     const responseComposeFile = decodeURIComponent(result.Message);
-    setComposeFile(responseComposeFile);
+    // setComposeFile(responseComposeFile);
+    setComposeFileList(JSON.parse(responseComposeFile));
 
     const yaml = parse(responseComposeFile);
     // setComposeFile(JSON.stringify(yaml.services));
@@ -56,6 +58,12 @@ export function App() {
   const composeUp = async () => {
     setComposeFile("Compose Up...");
     try {
+      const result = (await ddClient.extension.vm?.service?.get(
+        "/compose-file"
+      )) as any;
+      const composeFile = result.Message;
+      setComposeFile(composeFile || "Nope");
+
       await ddClient.extension.host.cli.exec(
         `printf '${composeFile}' > docker-compose.yaml`,
         []
@@ -68,6 +76,76 @@ export function App() {
     }
   };
 
+  const mainButtons = (
+    <Stack direction="column" alignItems="end" spacing={2}>
+      <Button variant="contained" onClick={downloadComposeFiles}>
+        Download Compose Files
+      </Button>
+
+      <Button variant="contained" disabled={!composeFile} onClick={composeUp}>
+        Compose Up
+      </Button>
+    </Stack>
+  );
+
+  const composeFiles = (
+    <Stack
+      direction="column"
+      alignItems="start"
+      spacing={2}
+      sx={{ mt: 4 }}
+      divider={<Divider orientation="horizontal" flexItem />}
+    >
+      {composeFileList.map(
+        (listItem: { name: string; description: string }) => (
+          <Stack direction="column">
+            <Link onClick={composeUp}>{listItem.name}</Link>
+            {listItem.description}
+          </Stack>
+        )
+      )}
+    </Stack>
+  );
+
+  const composeFileTextField = (
+    <TextField
+      label="Compose file"
+      sx={{ width: 480 }}
+      disabled
+      multiline
+      variant="outlined"
+      minRows={5}
+      value={composeFile ?? ""}
+    />
+  );
+
+  const composeFileMetadata = (
+    <Stack
+      direction="column"
+      alignItems="start"
+      spacing={2}
+      sx={{ mt: 4 }}
+      divider={<Divider orientation="horizontal" flexItem />}
+    >
+      <Stack direction="column">
+        Namespaces
+        <Link href="https://hub.docker.com/search?q=&image_filter=official">
+          Official Images
+        </Link>
+      </Stack>
+      <Stack direction="column">
+        Repositories
+        <Stack>
+          {repos &&
+            repos.length &&
+            repos.map((repo) => (
+              <Link href={`https://hub.docker.com/_/${repo}`}>{repo}</Link>
+            ))}
+        </Stack>
+      </Stack>
+    </Stack>
+  );
+
   return (
     <>
       <Typography variant="h3">Compose-Hub-Viewer</Typography>
@@ -75,53 +153,15 @@ export function App() {
         This extension lists out Compose files you've uploaded, shows the
         contents, and lists links to mentioned Namespaces and Repositories.
       </Typography>
-      <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
-        <Stack direction="column" alignItems="end" spacing={2}>
-          <Button variant="contained" onClick={downloadComposeFile}>
-            Download Compose File
-          </Button>
-
-          <Button
-            variant="contained"
-            disabled={!composeFile}
-            onClick={composeUp}
-          >
-            Compose Up
-          </Button>
+      <Stack direction="column" alignItems="start" spacing={2} sx={{ mt: 4 }}>
+        <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
+          {mainButtons}
+          {composeFiles}
         </Stack>
 
-        <TextField
-          label="Backend response"
-          sx={{ width: 480 }}
-          disabled
-          multiline
-          variant="outlined"
-          minRows={5}
-          value={composeFile ?? ""}
-        />
-        <Stack
-          direction="column"
-          alignItems="start"
-          spacing={2}
-          sx={{ mt: 4 }}
-          divider={<Divider orientation="horizontal" flexItem />}
-        >
-          <Stack direction="column">
-            Namespaces
-            <Link href="https://hub.docker.com/search?q=&image_filter=official">
-              Official Images
-            </Link>
-          </Stack>
-          <Stack direction="column">
-            Repositories
-            <Stack>
-              {repos &&
-                repos.length &&
-                repos.map((repo) => (
-                  <Link href={`https://hub.docker.com/_/${repo}`}>{repo}</Link>
-                ))}
-            </Stack>
-          </Stack>
+        <Stack direction="row" alignItems="start" spacing={2} sx={{ mt: 4 }}>
+          {composeFileTextField}
+          {composeFileMetadata}
         </Stack>
       </Stack>
     </>
