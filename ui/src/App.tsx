@@ -33,27 +33,15 @@ export function App() {
     compose_file: string;
   }>();
   const [composeFile, setComposeFile] = React.useState<string>();
+  const [namespaces, setNamespaces] = React.useState<Array<string>>();
   const [repos, setRepos] = React.useState<Array<string>>();
   const ddClient = useDockerDesktopClient();
 
   const downloadComposeFiles = async () => {
-    const result = await fetch("http://localhost:8000/composes/foonamespace");
+    const result = await fetch("http://localhost:8000/composes");
     const json = await result.json();
     console.log("json", json);
     setComposeFileList(json as any);
-
-    const yaml = parse(decodeURIComponent(json[0].compose_file));
-    // setComposeFile(JSON.stringify(yaml.services));
-
-    const reposFromComposeFile = [];
-
-    for (const serviceName in yaml.services) {
-      const service = yaml.services[serviceName];
-      const serviceRepo = service.image.replace(/[:][a-zA-Z0-9]+/, "");
-      reposFromComposeFile.push(serviceRepo);
-    }
-
-    setRepos(reposFromComposeFile);
   };
 
   const composeUp = async () => {
@@ -86,6 +74,8 @@ export function App() {
 
   console.log(composeFileList);
 
+  const getComposes = () => {};
+
   const composeFiles = (
     <Stack
       direction="column"
@@ -94,30 +84,58 @@ export function App() {
       sx={{ mt: 4 }}
       divider={<Divider orientation="horizontal" flexItem />}
     >
-      {composeFileList.map(
-        (listItem: {
-          name: string;
-          description: string;
-          compose_file: string;
-        }) => {
-          console.log("listItem", listItem);
-          console.log("selectedCompose", selectedCompose);
-          return (
-            <Stack direction="column">
-              <Link
-                onClick={() => {
-                  setSelectedCompose(listItem);
-                  setComposeFile(decodeURIComponent(listItem.compose_file));
-                }}
-              >
-                {listItem?.name}
-                {selectedCompose?.name === listItem?.name ? "*" : ""}
-              </Link>
-              {listItem?.description}
-            </Stack>
-          );
-        }
-      )}
+      {Object.keys(composeFileList)
+        .flatMap((k) => composeFileList[k])
+        .map(
+          (listItem: {
+            name: string;
+            description: string;
+            compose_file: string;
+          }) => {
+            return (
+              <Stack direction="column">
+                <Link
+                  onClick={() => {
+                    setSelectedCompose(listItem);
+                    setComposeFile(decodeURIComponent(listItem.compose_file));
+
+                    const yaml = parse(
+                      decodeURIComponent(listItem.compose_file)
+                    );
+                    const namespacesFromComposeFile = [];
+                    const reposFromComposeFile = [];
+
+                    for (const serviceName in yaml.services) {
+                      const service = yaml.services[serviceName];
+                      const serviceRepo = service.image.replace(
+                        /[:][a-zA-Z0-9]+/,
+                        ""
+                      );
+
+                      const match = serviceRepo.match(
+                        /^([a-zA-Z0-9-]+)[/]?([a-zA-Z0-9-]*)$/
+                      );
+
+                      if (match[2]) {
+                        namespacesFromComposeFile.push(match[1]);
+                        reposFromComposeFile.push(match[2]);
+                      } else {
+                        reposFromComposeFile.push(match[1]);
+                      }
+                    }
+
+                    setNamespaces(namespacesFromComposeFile);
+                    setRepos(reposFromComposeFile);
+                  }}
+                >
+                  {listItem?.name}
+                  {selectedCompose?.name === listItem?.name ? "*" : ""}
+                </Link>
+                {listItem?.description}
+              </Stack>
+            );
+          }
+        )}
     </Stack>
   );
 
@@ -145,6 +163,13 @@ export function App() {
         <Link href="https://hub.docker.com/search?q=&image_filter=official">
           Official Images
         </Link>
+        {namespaces &&
+          namespaces.length > 0 &&
+          namespaces.map((namespace) => (
+            <Link href={`https://hub.docker.com/orgs/${namespace}`}>
+              {namespace}
+            </Link>
+          ))}
       </Stack>
       <Stack direction="column">
         Repositories

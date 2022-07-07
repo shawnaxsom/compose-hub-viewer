@@ -61,7 +61,7 @@ func composeFile(ctx echo.Context) error {
 }
 
 func composeFileList(ctx echo.Context) error {
-	resp, _ := http.Get("http://localhost:8000/composes/foonamespace")
+	resp, _ := http.Get("http://localhost:8000/composes")
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	return ctx.JSON(http.StatusOK, HTTPMessageBody{
