@@ -22,6 +22,7 @@ func main() {
 	DB = make(map[string]map[string]Compose)
 	r := mux.NewRouter()
 
+	r.HandleFunc("/composes", GetComposes).Methods("GET")
 	r.HandleFunc("/composes", ComposesHandler).Methods("POST")
 	r.HandleFunc("/composes/{namespace}", GetComposesByNamespace).Methods("GET")
 	r.HandleFunc("/composes/{namespace}/{name}", GetCompose).Methods("GET")
@@ -50,6 +51,12 @@ func ComposesHandler(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, compose)
 }
 
+func GetComposes(w http.ResponseWriter, r *http.Request) {
+	c := getComposes()
+
+	writeResponse(w, c)
+}
+
 func GetComposesByNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
@@ -69,6 +76,14 @@ func GetCompose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeResponse(w, c)
+}
+
+func getComposes() map[string][]Compose {
+	res := make(map[string][]Compose)
+	for ns := range DB {
+		res[ns] = getComposesByNamespace(ns)
+	}
+	return res
 }
 
 func getComposesByNamespace(namespace string) []Compose {
