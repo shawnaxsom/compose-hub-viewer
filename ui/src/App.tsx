@@ -118,10 +118,9 @@ export function App() {
 
                       if (match[2]) {
                         namespacesFromComposeFile.push(match[1]);
-                        reposFromComposeFile.push(match[2]);
-                      } else {
-                        reposFromComposeFile.push(match[1]);
                       }
+
+                      reposFromComposeFile.push(serviceRepo);
                     }
 
                     setNamespaces(namespacesFromComposeFile);
@@ -166,7 +165,7 @@ export function App() {
         {namespaces &&
           namespaces.length > 0 &&
           namespaces.map((namespace) => (
-            <Link href={`https://hub.docker.com/orgs/${namespace}`}>
+            <Link href={`https://hub.docker.com/u/${namespace}`}>
               {namespace}
             </Link>
           ))}
@@ -177,7 +176,15 @@ export function App() {
           {repos &&
             repos.length &&
             repos.map((repo) => (
-              <Link href={`https://hub.docker.com/_/${repo}`}>{repo}</Link>
+              <Link
+                href={
+                  repo.indexOf("/") >= 0
+                    ? `https://hub.docker.com/r/${repo}`
+                    : `https://hub.docker.com/_/${repo}`
+                }
+              >
+                {repo}
+              </Link>
             ))}
         </Stack>
       </Stack>
